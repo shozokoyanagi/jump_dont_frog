@@ -19,7 +19,22 @@
       transition: transform 0.2s;
     }
     .jumped {
-      transform: translateY(-200px);
+      transform: scale(4) rotate(720deg);
+      animation: explode 0.5s ease-out forwards;
+    }
+    @keyframes explode {
+      0% {
+        filter: brightness(1);
+        opacity: 1;
+      }
+      50% {
+        filter: brightness(2) saturate(2);
+        opacity: 0.5;
+      }
+      100% {
+        filter: blur(10px);
+        opacity: 0;
+      }
     }
     #message {
       font-size: 24px;
@@ -37,6 +52,7 @@
   <div id="frog">🐸</div>
   <div id="message">スペースキーを押すな！ジャンプするな！</div>
   <div id="score">スコア: 0</div>
+  <audio id="boom" src="https://freesound.org/data/previews/273/273792_5121236-lq.mp3"></audio>
 
   <script>
     let score = 0;
@@ -62,8 +78,13 @@
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         stopScoring();
-        document.getElementById('message').innerText = 'ジャンプしちゃった！ゲームオーバー！';
-        document.getElementById('frog').classList.add('jumped');
+        const frog = document.getElementById('frog');
+        const message = document.getElementById('message');
+        const boom = document.getElementById('boom');
+
+        message.innerText = 'ジャンプしちゃった！ゲームオーバー！💥';
+        frog.classList.add('jumped');
+        boom.play();
       }
     });
   </script>
