@@ -45,6 +45,34 @@
       font-size: 20px;
       margin-top: 10px;
     }
+    #commentary {
+      margin-top: 30px;
+      font-size: 18px;
+      color: #333;
+      font-style: italic;
+    }
+    #mobile-warning {
+      display: none;
+      margin-top: 20px;
+      font-size: 22px;
+      color: red;
+    }
+    #highscore {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #004d00;
+    }
+    #credits {
+      display: none;
+      margin-top: 50px;
+      font-size: 16px;
+      color: #222;
+      animation: scrollCredits 10s linear forwards;
+    }
+    @keyframes scrollCredits {
+      0% { opacity: 0; transform: translateY(100px); }
+      100% { opacity: 1; transform: translateY(-50px); }
+    }
   </style>
 </head>
 <body>
@@ -52,40 +80,90 @@
   <div id="frog">🐸</div>
   <div id="message">スペースキーを押すな！ジャンプするな！</div>
   <div id="score">スコア: 0</div>
+  <div id="highscore">最高スコア: 0</div>
+  <div id="commentary">実況：ゲーム開始！さあ、どこまで耐えられるか！？</div>
+  <div id="mobile-warning">画面をタップするなよ！？ぜっっったいにタップするなよ！？</div>
+  <div id="credits">
+    <p>エンドロール</p>
+    <p>開発: あなた（ジャンプする気まんまん）</p>
+    <p>企画: カエル（ジャンプさせたくない）</p>
+    <p>爆発監修: ChatGPT（巻き込まれた）</p>
+    <p>効果音: freesound.org</p>
+    <p>特別出演: スペースキー & タッチスクリーン</p>
+    <p>ご協力: あなたの忍耐力（短命）</p>
+    <p>ありがとうございました！</p>
+  </div>
   <audio id="boom" src="https://freesound.org/data/previews/273/273792_5121236-lq.mp3"></audio>
 
   <script>
     let score = 0;
     let interval;
+    let isGameOver = false;
+    const commentary = document.getElementById('commentary');
+    const highscoreDisplay = document.getElementById('highscore');
+    const credits = document.getElementById('credits');
+
+    let highscore = localStorage.getItem('frog_highscore') || 0;
+    highscoreDisplay.innerText = `最高スコア: ${highscore}`;
 
     function updateScore() {
       score++;
       document.getElementById('score').innerText = `スコア: ${score}`;
+      if (score === 5) commentary.innerText = '実況：おっと、5秒突破！地味に緊張してきたか？';
+      if (score === 10) commentary.innerText = '実況：10秒突破！カエルくんが汗かいてます！';
+      if (score === 15) commentary.innerText = '実況：まだ押さない！これは精神力の戦いだ！';
+      if (score === 20) commentary.innerText = '実況：20秒...そろそろ指が勝手に動き出す頃！';
+      if (score === 25) commentary.innerText = '実況：もうこれは修行です。ジャンプするな。するなよ？';
     }
 
     function startScoring() {
-      interval = setInterval(updateScore, 500);
+      interval = setInterval(updateScore, 1000);
     }
 
     function stopScoring() {
       clearInterval(interval);
     }
 
+    function gameOver() {
+      if (isGameOver) return;
+      stopScoring();
+      isGameOver = true;
+
+      if (score > highscore) {
+        highscore = score;
+        localStorage.setItem('frog_highscore', highscore);
+        highscoreDisplay.innerText = `最高スコア: ${highscore}`;
+        commentary.innerText = '実況：自己ベスト更新！今、伝説になった！';
+      }
+
+      const frog = document.getElementById('frog');
+      const message = document.getElementById('message');
+      const boom = document.getElementById('boom');
+
+      message.innerText = 'ジャンプしちゃった！ゲームオーバー！💥';
+      if (commentary.innerText.indexOf('伝説') === -1) {
+        commentary.innerText = '実況：ああああーーー！！！カエルくん飛んだーー！！やっちまったーー！！';
+      }
+      frog.classList.add('jumped');
+      boom.play();
+      setTimeout(() => {
+        credits.style.display = 'block';
+      }, 1500);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       startScoring();
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        document.getElementById('mobile-warning').style.display = 'block';
+      }
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        stopScoring();
-        const frog = document.getElementById('frog');
-        const message = document.getElementById('message');
-        const boom = document.getElementById('boom');
+      if (e.code === 'Space') gameOver();
+    });
 
-        message.innerText = 'ジャンプしちゃった！ゲームオーバー！💥';
-        frog.classList.add('jumped');
-        boom.play();
-      }
+    document.addEventListener('touchstart', () => {
+      gameOver();
     });
   </script>
 </body>
