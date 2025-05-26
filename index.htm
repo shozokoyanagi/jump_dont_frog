@@ -22,19 +22,17 @@
       transform: scale(4) rotate(720deg);
       animation: explode 0.5s ease-out forwards;
     }
+    .prejump {
+      animation: prepJump 0.5s infinite alternate;
+    }
     @keyframes explode {
-      0% {
-        filter: brightness(1);
-        opacity: 1;
-      }
-      50% {
-        filter: brightness(2) saturate(2);
-        opacity: 0.5;
-      }
-      100% {
-        filter: blur(10px);
-        opacity: 0;
-      }
+      0% { filter: brightness(1); opacity: 1; }
+      50% { filter: brightness(2) saturate(2); opacity: 0.5; }
+      100% { filter: blur(10px); opacity: 0; }
+    }
+    @keyframes prepJump {
+      from { transform: scale(1); }
+      to { transform: scale(1.2) translateY(-10px); }
     }
     #message {
       font-size: 24px;
@@ -99,9 +97,13 @@
     let score = 0;
     let interval;
     let isGameOver = false;
+    let isPreJumping = false;
     const commentary = document.getElementById('commentary');
     const highscoreDisplay = document.getElementById('highscore');
     const credits = document.getElementById('credits');
+    const frog = document.getElementById('frog');
+    const message = document.getElementById('message');
+    const boom = document.getElementById('boom');
 
     let highscore = localStorage.getItem('frog_highscore') || 0;
     highscoreDisplay.innerText = `最高スコア: ${highscore}`;
@@ -118,13 +120,14 @@
 
     function startScoring() {
       interval = setInterval(updateScore, 1000);
+      triggerPreJump();
     }
 
     function stopScoring() {
       clearInterval(interval);
     }
 
-    function gameOver() {
+    function gameOver(triggered = false) {
       if (isGameOver) return;
       stopScoring();
       isGameOver = true;
@@ -136,19 +139,34 @@
         commentary.innerText = '実況：自己ベスト更新！今、伝説になった！';
       }
 
-      const frog = document.getElementById('frog');
-      const message = document.getElementById('message');
-      const boom = document.getElementById('boom');
-
-      message.innerText = 'ジャンプしちゃった！ゲームオーバー！💥';
-      if (commentary.innerText.indexOf('伝説') === -1) {
-        commentary.innerText = '実況：ああああーーー！！！カエルくん飛んだーー！！やっちまったーー！！';
+      message.innerText = triggered ? 'カエルが勝手にジャンプした！💥' : 'ジャンプしちゃった！ゲームオーバー！💥';
+      if (!commentary.innerText.includes('伝説')) {
+        commentary.innerText = triggered
+          ? '実況：やばい！押さなかった！カエルが跳んだー！！'
+          : '実況：ああああーーー！！！カエルくん飛んだーー！！やっちまったーー！！';
       }
+      frog.classList.remove('prejump');
       frog.classList.add('jumped');
       boom.play();
+      setTimeout(() => { credits.style.display = 'block'; }, 1500);
+    }
+
+    function triggerPreJump() {
+      if (isGameOver) return;
+      const delay = Math.random() * 10000 + 5000;
       setTimeout(() => {
-        credits.style.display = 'block';
-      }, 1500);
+        if (isGameOver) return;
+        isPreJumping = true;
+        frog.classList.add('prejump');
+        message.innerText = 'カエルがジャンプしそうだ！止めろ！（スペースキー）';
+        commentary.innerText = '実況：こ、これはまずい！制止できるのか！？';
+
+        setTimeout(() => {
+          if (!isGameOver) {
+            if (isPreJumping) gameOver(true);
+          }
+        }, 3000);
+      }, delay);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -159,11 +177,29 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') gameOver();
+      if (e.code === 'Space') {
+        if (isPreJumping) {
+          isPreJumping = false;
+          frog.classList.remove('prejump');
+          message.innerText = '止めた！ナイス制止！';
+          commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
+          triggerPreJump();
+        } else {
+          gameOver();
+        }
+      }
     });
 
     document.addEventListener('touchstart', () => {
-      gameOver();
+      if (isPreJumping) {
+        isPreJumping = false;
+        frog.classList.remove('prejump');
+        message.innerText = '止めた！ナイス制止！';
+        commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
+        triggerPreJump();
+      } else {
+        gameOver();
+      }
     });
   </script>
 </body>
