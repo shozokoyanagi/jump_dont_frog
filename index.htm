@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ジャンプするな、カエルくん！</title>
+  <style>
+    body {
+      background-color: #c1f0c1;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 30px;
+    }
+    #frog {
+      font-size: 100px;
+      transition: transform 0.2s;
+    }
+    .jumped {
+      transform: translateY(-200px);
+    }
+    #message {
+      font-size: 24px;
+      margin-top: 20px;
+      color: red;
+    }
+    #score {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>ジャンプするな、カエルくん！</h1>
+  <div id="frog">🐸</div>
+  <div id="message">スペースキーを押すな！ジャンプするな！</div>
+  <div id="score">スコア: 0</div>
+
+  <script>
+    let score = 0;
+    let interval;
+
+    function updateScore() {
+      score++;
+      document.getElementById('score').innerText = `スコア: ${score}`;
+    }
+
+    function startScoring() {
+      interval = setInterval(updateScore, 500);
+    }
+
+    function stopScoring() {
+      clearInterval(interval);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      startScoring();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        stopScoring();
+        document.getElementById('message').innerText = 'ジャンプしちゃった！ゲームオーバー！';
+        document.getElementById('frog').classList.add('jumped');
+      }
+    });
+  </script>
+</body>
+</html>
