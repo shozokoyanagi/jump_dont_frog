@@ -14,9 +14,11 @@
     h1 {
       margin-top: 30px;
     }
-    #frog {
+    .frog {
       font-size: 100px;
       transition: transform 0.2s;
+      display: inline-block;
+      margin: 20px;
     }
     .jumped {
       transform: scale(4) rotate(720deg);
@@ -75,7 +77,10 @@
 </head>
 <body>
   <h1>ジャンプするな、カエルくん！</h1>
-  <div id="frog">🐸</div>
+  <div id="frogs">
+    <div id="frog1" class="frog">🐸</div>
+    <div id="frog2" class="frog">🐸</div>
+  </div>
   <div id="message">スペースキーを押すな！ジャンプするな！</div>
   <div id="score">スコア: 0</div>
   <div id="highscore">最高スコア: 0</div>
@@ -86,24 +91,27 @@
     <p>開発: あなた（ジャンプする気まんまん）</p>
     <p>企画: カエル（ジャンプさせたくない）</p>
     <p>爆発監修: ChatGPT（巻き込まれた）</p>
-    <p>効果音: freesound.org</p>
-    <p>特別出演: スペースキー & タッチスクリーン</p>
-    <p>ご協力: あなたの忍耐力（短命）</p>
+    <p>効果音: 無音の哲学</p>
+    <p>特別出演: 裏切りのカエルズ</p>
+    <p>ご協力: あなたの忍耐力（限界）</p>
     <p>ありがとうございました！</p>
   </div>
-  <audio id="boom" src="https://www.soundjay.com/button/beep-07.wav"></audio>
 
   <script>
     let score = 0;
     let interval;
     let isGameOver = false;
     let isPreJumping = false;
+    let activeFrog = null;
+    let fakeOut = false;
+    const frogs = {
+      frog1: document.getElementById('frog1'),
+      frog2: document.getElementById('frog2')
+    };
     const commentary = document.getElementById('commentary');
     const highscoreDisplay = document.getElementById('highscore');
     const credits = document.getElementById('credits');
-    const frog = document.getElementById('frog');
     const message = document.getElementById('message');
-    const boom = document.getElementById('boom');
 
     let highscore = localStorage.getItem('frog_highscore') || 0;
     highscoreDisplay.innerText = `最高スコア: ${highscore}`;
@@ -116,6 +124,7 @@
       if (score === 15) commentary.innerText = '実況：まだ押さない！これは精神力の戦いだ！';
       if (score === 20) commentary.innerText = '実況：20秒...そろそろ指が勝手に動き出す頃！';
       if (score === 25) commentary.innerText = '実況：もうこれは修行です。ジャンプするな。するなよ？';
+      if (score >= 30 && score % 5 === 0) commentary.innerText = '実況：あれ？もう押しちゃえば？退屈してない？';
     }
 
     function startScoring() {
@@ -145,9 +154,8 @@
           ? '実況：やばい！押さなかった！カエルが跳んだー！！'
           : '実況：ああああーーー！！！カエルくん飛んだーー！！やっちまったーー！！';
       }
-      frog.classList.remove('prejump');
-      frog.classList.add('jumped');
-      boom.play();
+      Object.values(frogs).forEach(frog => frog.classList.remove('prejump'));
+      activeFrog.classList.add('jumped');
       setTimeout(() => { credits.style.display = 'block'; }, 1500);
     }
 
@@ -156,14 +164,18 @@
       const delay = Math.random() * 10000 + 5000;
       setTimeout(() => {
         if (isGameOver) return;
+        activeFrog = Math.random() < 0.5 ? frogs.frog1 : frogs.frog2;
         isPreJumping = true;
-        frog.classList.add('prejump');
+        fakeOut = Math.random() < 0.3; // 30%フェイント
+        activeFrog.classList.add('prejump');
         message.innerText = 'カエルがジャンプしそうだ！止めろ！（スペースキー）';
-        commentary.innerText = '実況：こ、これはまずい！制止できるのか！？';
+        commentary.innerText = '実況：どっちだ！？飛ぶのか！？騙されるな！？';
 
         setTimeout(() => {
           if (!isGameOver) {
-            if (isPreJumping) gameOver(true);
+            if (isPreJumping && !fakeOut) gameOver(true);
+            isPreJumping = false;
+            activeFrog.classList.remove('prejump');
           }
         }, 3000);
       }, delay);
@@ -179,11 +191,15 @@
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         if (isPreJumping) {
-          isPreJumping = false;
-          frog.classList.remove('prejump');
-          message.innerText = '止めた！ナイス制止！';
-          commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
-          triggerPreJump();
+          if (fakeOut) {
+            gameOver();
+          } else {
+            isPreJumping = false;
+            activeFrog.classList.remove('prejump');
+            message.innerText = '止めた！ナイス制止！';
+            commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
+            triggerPreJump();
+          }
         } else {
           gameOver();
         }
@@ -192,11 +208,15 @@
 
     document.addEventListener('touchstart', () => {
       if (isPreJumping) {
-        isPreJumping = false;
-        frog.classList.remove('prejump');
-        message.innerText = '止めた！ナイス制止！';
-        commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
-        triggerPreJump();
+        if (fakeOut) {
+          gameOver();
+        } else {
+          isPreJumping = false;
+          activeFrog.classList.remove('prejump');
+          message.innerText = '止めた！ナイス制止！';
+          commentary.innerText = '実況：セーーーフ！！カエルくんは跳ばなかった！';
+          triggerPreJump();
+        }
       } else {
         gameOver();
       }
